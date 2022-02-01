@@ -1,3 +1,9 @@
 def draw_mall():
-    print("mall not found")
+    print("====================")
+    for i in range(2):
+        print("|                  |")
+    print("|      MALL       |")
+    for i in range(2):
+        print("|                  |")
+    print("====================")
     return
