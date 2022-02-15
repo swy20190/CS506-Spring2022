@@ -30,13 +30,25 @@ def update_centers(dataset, assignments):
     Return `k` centers in a list
     """
     answer = []
-    for assign in assignments:
-        points = []
-        for idx in assign:
-            points.append(dataset[idx])
-        answer.append(point_avg(points))
+    points_dict = {}
+    for i in range(len(assignments)):
+        if assignments[i] in points_dict:
+            points_dict[assignments[i]].append(dataset[i])
+        else:
+            points_dict[assignments[i]] = [dataset[i]]
+
+    for c in points_dict:
+        center = [0]*len(points_dict[c][0])
+        for point in points_dict[c]:
+            for i in range(len(point)):
+                center[i] += point[i]
+        for i in range(len(center)):
+            center[i] /= len(points_dict[c])
+
+        answer.append(center)
 
     return answer
+
 
 def assign_points(data_points, centers):
     """
@@ -58,7 +70,8 @@ def distance(a, b):
     """
     Returns the Euclidean distance between a and b
     """
-    return math.sqrt(distance_squared(a, b))
+    return distance_squared(a, b)**(1/2)
+
 
 def distance_squared(a, b):
     answer = 0
@@ -66,15 +79,28 @@ def distance_squared(a, b):
         answer += (a[i]-b[i])*(a[i]-b[i])
     return answer
 
+
 def generate_k(dataset, k):
     """
     Given `data_set`, which is an array of arrays,
     return a random set of k points from the data_set
     """
+    res = []
+    idc = random.sample(range(len(dataset)), k)
+    for idx in idc:
+        res.append(dataset[idx])
+    return res
 
 
 def cost_function(clustering):
-    raise NotImplementedError()
+    res = 0
+    for center in clustering:
+        d_sum = 0
+        center_point = point_avg(clustering[center])
+        for point in clustering[d_sum]:
+            d_sum += distance(center_point, point)
+        res += d_sum
+    return res
 
 
 def generate_k_pp(dataset, k):
@@ -84,7 +110,36 @@ def generate_k_pp(dataset, k):
     where points are picked with a probability proportional
     to their distance as per kmeans pp
     """
-    raise NotImplementedError()
+    res = []
+    rest_idc = list(range(len(dataset)))
+    selected_idc = []
+    first = random.randint(0, len(dataset)-1)
+    selected_idc.append(first)
+    rest_idc.remove(first)
+    for _ in range(k-1):
+        weights = {}
+        for rest_idx in rest_idc:
+            w = 0
+            for selected_idx in selected_idc:
+                w += distance_squared(dataset[rest_idx], dataset[selected_idx])
+            weights[rest_idx] = w
+        w_sum = 0
+        for idx in weights:
+            w_sum += weights[idx]
+        rand_s = random.randint(0, w_sum-2)
+        acc = 0
+        for idx in rest_idc:
+            if acc<=rand_s and acc+weights[idx]>rand_s:
+                selected_idc.append(idx)
+                rest_idc.remove(idx)
+                break
+            else:
+                acc += weights[idx]
+
+    for idx in selected_idc:
+        res.append(dataset[idx])
+
+    return res
 
 
 def _do_lloyds_algo(dataset, k_points):
